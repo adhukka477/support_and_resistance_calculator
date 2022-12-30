@@ -39,18 +39,19 @@ class FractalScanner():
 
 class WindowScanner(FractalScanner):
 
-    def __init__(self, ticker, df=None, window = 10, shift = 15):
+    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = '1wk', period = 'max'):
         super(WindowScanner, self).__init__()
 
         self.ticker = ticker
         self.window = window
         self.shift = shift
         
-        self.interval = '1wk'
-        self.period = 'max'
+        self.interval = interval
+        self.period = period
 
         if df is None:
-            self.df = Ticker(ticker = self.ticker).get_stock_price_history(period = self.period, interval = self.interval).data
+            ticker_manager = Ticker(ticker = self.ticker)
+            self.df = ticker_manager.get_stock_price_history(period = self.period, interval = self.interval)
         else:
             self.df = df
 

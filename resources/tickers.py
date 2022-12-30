@@ -9,7 +9,6 @@ class Ticker():
   
     def __init__(self, ticker):
         self.ticker = ticker
-        self.data = self.get_stock_price_history()
 
     # get stock prices using yfinance library
     def get_stock_price_history(self, interval = '1d', period = 'max'):
