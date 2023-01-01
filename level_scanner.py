@@ -1,5 +1,5 @@
 import numpy as np
-from resources.tickers import Ticker
+from tickers import Ticker
 
 class FractalScanner():
 
