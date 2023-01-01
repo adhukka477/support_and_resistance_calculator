@@ -1,5 +1,5 @@
 import numpy as np
-from resources.tickers import Ticker
+from tickers import Ticker
 
 class FractalScanner():
 
@@ -37,6 +37,37 @@ class FractalScanner():
                 if self.isFarFromLevel(high, self.levels, df):      
                     self.levels.append((i,high))
 
+
+    def consolidate_values(self,values, alpha = 0.05):
+        # Initialize the consolidated list
+        consolidated = []
+
+        # Iterate through the values
+        for i, value in enumerate(values):
+            # Check if the value is within 5% of any other value in the list
+            within_range = False
+            for j, other_value in enumerate(values):
+                if i == j:
+                    continue
+                diff = abs((value - other_value) / other_value)
+                if diff <= alpha:
+                    within_range = True
+                    break
+
+            # If the value is within 5% of another value, average the two values and add the average to the consolidated list
+            if within_range:
+                avg = (value + other_value) / 2
+                consolidated.append(avg)
+                values.remove(value)
+                values.remove(other_value)
+            # Otherwise, add the value to the consolidated list
+            else:
+                consolidated.append(value)
+
+        return consolidated
+
+
+
 class WindowScanner(FractalScanner):
 
     def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', period = 'max'):
@@ -68,15 +99,16 @@ class WindowScanner(FractalScanner):
             # if we find a new maximum value, empty the max_list 
             if current_max not in max_list:
                 max_list = []
-            max_list.append(current_max)
+            max_list.append(int(current_max))
             # if the maximum value remains the same after shifting 5 times
             if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
-                self.levels.append((high_range.idxmax(), current_max))
+                self.levels.append((high_range.idxmax(), int(current_max)))
 
             low_range = self.df['Low'][i-self.window:i+self.window]
             current_min = low_range.min()
             if current_min not in min_list:
                 min_list = []
-            min_list.append(current_min)
+            min_list.append(int(current_min))
             if len(min_list)==self.shift and self.isFarFromLevel(current_min,self.levels, self.df):
-                self.levels.append((low_range.idxmin(), current_min))
+                self.levels.append((low_range.idxmin(), int(current_min)))
+
