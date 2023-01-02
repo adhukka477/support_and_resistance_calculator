@@ -1,5 +1,5 @@
 import numpy as np
-from tickers import Ticker
+from yahoo_finance.tickers import Ticker
 
 class FractalScanner():
 
@@ -48,8 +48,6 @@ class FractalScanner():
 
         return consolidated
     
-
-
 class WindowScanner(FractalScanner):
 
     def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', alpha = 0.05):
@@ -95,6 +93,3 @@ class WindowScanner(FractalScanner):
         self.levels.sort()
         self.levels = self.consolidateValues([x for x in self.levels if x > 0], alpha=self.alpha)
 
-
-
-        
