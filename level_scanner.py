@@ -22,8 +22,35 @@ class FractalScanner():
     # to make sure the new level area does not exist already
     def isFarFromLevel(self, value, levels, df):    
         ave =  np.mean(df['High'] - df['Low'])    
-        return np.sum([abs(value-level) < ave for _,level in levels])==0
+        return np.sum([abs(value-level) < ave for level in levels])==0
 
+    def consolidateValues(self, values, alpha = 0.05):
+        # Initialize the consolidated list
+        consolidated = []
+
+        # Iterate through the values
+        for i, value in enumerate(values):
+            # Check if the value is within 5% of any other value in the list
+            within_range = False
+            for j, other_value in enumerate(values):
+                if i == j:
+                    continue
+                diff = abs((value - other_value) / other_value)
+                if diff <= alpha:
+                    within_range = True
+                    break
+
+            # If the value is within 5% of another value, average the two values and add the average to the consolidated list
+            if within_range:
+                avg = (value + other_value) / 2
+                consolidated.append(avg)
+                values.remove(value)
+                values.remove(other_value)
+            # Otherwise, add the value to the consolidated list
+            else:
+                consolidated.append(value)
+
+        return consolidated
 
     def calculatePriceLevels(self, df, window):
         self.levels = []
@@ -31,11 +58,11 @@ class FractalScanner():
             if self.isSupport(df, i, window):    
                 low = df['Low'][i]    
                 if self.isFarFromLevel(low, self.levels, df):      
-                    self.levels.append((i,low))
+                    self.levels.append(low)
             elif self.isResistance(df, i, window):    
                 high = df['High'][i]    
                 if self.isFarFromLevel(high, self.levels, df):      
-                    self.levels.append((i,high))
+                    self.levels.append(high)
 
 
     def consolidate_values(self,values, alpha = 0.05):
@@ -70,12 +97,13 @@ class FractalScanner():
 
 class WindowScanner(FractalScanner):
 
-    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', period = 'max'):
+    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', period = 'max', alpha = 0.05):
         super(WindowScanner, self).__init__()
 
         self.ticker = ticker
         self.window = window
         self.shift = shift
+        self.alpha = alpha
         
         self.interval = interval
         self.period = period
@@ -102,7 +130,7 @@ class WindowScanner(FractalScanner):
             max_list.append(int(current_max))
             # if the maximum value remains the same after shifting 5 times
             if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
-                self.levels.append((high_range.idxmax(), int(current_max)))
+                self.levels.append(int(current_max))
 
             low_range = self.df['Low'][i-self.window:i+self.window]
             current_min = low_range.min()
@@ -110,5 +138,9 @@ class WindowScanner(FractalScanner):
                 min_list = []
             min_list.append(int(current_min))
             if len(min_list)==self.shift and self.isFarFromLevel(current_min,self.levels, self.df):
-                self.levels.append((low_range.idxmin(), int(current_min)))
+                self.levels.append(int(current_min))
 
+        self.levels = self.consolidateValues([x for x in self.levels if x > 0], alpha=self.alpha)
+
+
+        
