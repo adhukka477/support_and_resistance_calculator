@@ -1,23 +1,27 @@
 # import necessary libraries
 
 import pandas as pd
-import yfinance as yf
 import numpy as np
 from datetime import datetime as dt
 import datetime
-
+from urllib.request import Request, urlopen 
+from time import mktime
+from bs4 import BeautifulSoup
+import io
 
 
 class Ticker():
   
-    def __init__(self, ticker, interval = 'd', period = 'max'):
+    def __init__(self, ticker, start, end = dt.timestamp(dt.now()), interval = 'd'):
 
         self.ticker = ticker
         self.interval = interval
-        self.period = period
+        self.start = int(dt.timestamp(dt.strptime(start, "%Y-%m-%d")))
+        self.end = int(dt.timestamp(dt.strptime(end, "%Y-%m-%d")))
+
 
         if str(self.interval).lower() == 'd':
-            self.df = self.getDailyPrice()
+            self.df = self.getDailyData()
         elif str(self.interval).lower() == 'm':
             self.df = self.getMonthlyData()
         elif str(self.interval).lower() == 'w':
@@ -26,19 +30,26 @@ class Ticker():
             self.df = self.getDailyPrice()
 
     # get stock prices using yfinance library
-    def getDailyPrice(self):
+    def getDailyData(self):
 
-        sym = yf.Ticker(self.ticker)
-        df = sym.history(interval = '1d', period = self.period)
-        df['Date'] = pd.to_datetime(df.index).tz_localize(None)
+        url = "https://query1.finance.yahoo.com/v7/finance/download/" + self.ticker +\
+              "?period1=" + str(self.start)+\
+              "&period2=" + str(self.end)+\
+              "&interval=1d"+\
+              "&events=history&includeAdjustedClose=true"
+
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urlopen(req)
+        soup = BeautifulSoup(html, "html.parser")
+        df = pd.read_csv(io.StringIO(soup.text), sep=",")
+
         df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close', "Volume"]]
-        df.reset_index(drop = True, inplace = True)
         
         return(df)
     
     def getWeeklyData(self):
         # Load the daily stock data into a DataFrame
-        df = self.getDailyPrice()
+        df = self.getDailyData()
         # Convert the Date column to a datetime index
         df.index = pd.to_datetime(df['Date'])
 
@@ -60,7 +71,7 @@ class Ticker():
     def getMonthlyData(self):
 
         # Load the daily stock data into a DataFrame
-        df = self.getDailyPrice()
+        df = self.getDailyData()
         # Convert the Date column to a datetime index
         df.index = pd.to_datetime(df['Date'])
 
