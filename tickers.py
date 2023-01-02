@@ -12,7 +12,7 @@ import io
 
 class Ticker():
   
-    def __init__(self, ticker, start, end = dt.timestamp(dt.now()), interval = 'd'):
+    def __init__(self, ticker, start = "1970-01-02", end = dt.strftime(dt.now(), "%Y-%m-%d"), interval = 'd'):
 
         self.ticker = ticker
         self.interval = interval
@@ -21,13 +21,11 @@ class Ticker():
 
 
         if str(self.interval).lower() == 'd':
-            self.df = self.getDailyData()
+            self.getDailyData()
         elif str(self.interval).lower() == 'm':
-            self.df = self.getMonthlyData()
+            self.getMonthlyData()
         elif str(self.interval).lower() == 'w':
-            self.df = self.getWeeklyData()
-        else:
-            self.df = self.getDailyPrice()
+            self.getWeeklyData()
 
     # get stock prices using yfinance library
     def getDailyData(self):
@@ -41,51 +39,41 @@ class Ticker():
         req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         html = urlopen(req)
         soup = BeautifulSoup(html, "html.parser")
-        df = pd.read_csv(io.StringIO(soup.text), sep=",")
+        self.df = pd.read_csv(io.StringIO(soup.text), sep=",")
 
-        df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close', "Volume"]]
-        
-        return(df)
+        self.df = self.df.loc[:,['Date', 'Open', 'High', 'Low', 'Close', "Volume"]]
+        self.df.sort_values("Date", inplace=True)
     
     def getWeeklyData(self):
-        # Load the daily stock data into a DataFrame
-        df = self.getDailyData()
-        # Convert the Date column to a datetime index
-        df.index = pd.to_datetime(df['Date'])
 
-        # Resample the data to weekly frequency and calculate the mean, max, min, first, and last
-        df_weekly = df.resample('W').agg(['sum', 'max', 'min', 'first', 'last'])
+        url = "https://query1.finance.yahoo.com/v7/finance/download/" + self.ticker +\
+              "?period1=" + str(self.start)+\
+              "&period2=" + str(self.end)+\
+              "&interval=1wk"+\
+              "&events=history&includeAdjustedClose=true"
 
-        date = pd.to_datetime(df_weekly.index).tz_localize(None)
-        date = date + datetime.timedelta(days = -6)
-        open = df_weekly.Open["first"]
-        high = df_weekly.High["max"]
-        low = df_weekly.Low["min"]
-        close = df_weekly.Close["last"]
-        volume = df_weekly.Volume["sum"]
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urlopen(req)
+        soup = BeautifulSoup(html, "html.parser")
+        self.df = pd.read_csv(io.StringIO(soup.text), sep=",")
 
-        df_weekly = pd.DataFrame(zip(date, open, high, low, close, volume), columns=['Date', 'Open', 'High', 'Low', 'Close', "Volume"])
-
-        return df_weekly
+        self.df = self.df.loc[:,['Date', 'Open', 'High', 'Low', 'Close', "Volume"]]
+        self.df.sort_values("Date", inplace=True)
     
     def getMonthlyData(self):
 
-        # Load the daily stock data into a DataFrame
-        df = self.getDailyData()
-        # Convert the Date column to a datetime index
-        df.index = pd.to_datetime(df['Date'])
+        url = "https://query1.finance.yahoo.com/v7/finance/download/" + self.ticker +\
+              "?period1=" + str(self.start)+\
+              "&period2=" + str(self.end)+\
+              "&interval=1mo"+\
+              "&events=history&includeAdjustedClose=true"
 
-        # Resample the data to monthly frequency and calculate the mean, max, min, first, and last
-        df_monthly = df.resample('M').agg(['sum', 'max', 'min', 'first', 'last'])
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urlopen(req)
+        soup = BeautifulSoup(html, "html.parser")
+        self.df = pd.read_csv(io.StringIO(soup.text), sep=",")
 
-        date = pd.to_datetime(df_monthly.index).tz_localize(None)
-        date = date + datetime.timedelta(days=-30)
-        open = df_monthly.Open["first"]
-        high = df_monthly.High["max"]
-        low = df_monthly.Low["min"]
-        close = df_monthly.Close["last"]
-        volume = df_monthly.Volume["sum"]
+        self.df = self.df.loc[:,['Date', 'Open', 'High', 'Low', 'Close', "Volume"]]
+        self.df.sort_values("Date", inplace=True)
 
-        df_monthly = pd.DataFrame(zip(date, open, high, low, close, volume), columns=['Date', 'Open', 'High', 'Low', 'Close', "Volume"])
 
-        return df_monthly
