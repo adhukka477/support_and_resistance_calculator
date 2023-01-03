@@ -93,4 +93,5 @@ class WindowScanner(FractalScanner):
                 self.levels.append(current_min)
         
         self.levels.sort()
-        self.levels = self.consolidateValues(values = self.levels, alpha=self.alpha)
+        self.levels = self.consolidateValues(values = [int(x) for x in self.levels], alpha=self.alpha)
+        self.levels = [int(x) for x in self.levels if int(x) > 0]
