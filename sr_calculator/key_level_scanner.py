@@ -50,7 +50,7 @@ class FractalScanner():
     
 class WindowScanner(FractalScanner):
 
-    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', period = 'max', alpha = 0.05):
+    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', alpha = 0.05):
         super(WindowScanner, self).__init__()
 
         self.ticker = ticker
@@ -59,7 +59,6 @@ class WindowScanner(FractalScanner):
         self.alpha = alpha
         
         self.interval = interval
-        self.period = period
 
         if df is None:
             ticker_manager = Ticker(ticker = self.ticker, interval=self.interval)
@@ -80,17 +79,15 @@ class WindowScanner(FractalScanner):
             # if we find a new maximum value, empty the max_list 
             if current_max not in max_list:
                 max_list = []
-            max_list.append(int(current_max))
+            max_list.append(current_max)
             # if the maximum value remains the same after shifting 5 times
             if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
-                self.levels.append(int(current_max))
+                self.levels.append((high_range.idxmax(), current_max))
 
             low_range = self.df['Low'][i-self.window:i+self.window]
             current_min = low_range.min()
             if current_min not in min_list:
                 min_list = []
-            min_list.append(int(current_min))
+            min_list.append(current_min)
             if len(min_list)==self.shift and self.isFarFromLevel(current_min,self.levels, self.df):
-                self.levels.append(int(current_min))
-
-        self.levels = self.consolidateValues([x for x in self.levels if x > 0], alpha=self.alpha)
+                self.levels.append((low_range.idxmin(), current_min))
