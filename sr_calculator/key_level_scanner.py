@@ -50,7 +50,7 @@ class FractalScanner():
     
 class WindowScanner(FractalScanner):
 
-    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', alpha = 0.05):
+    def __init__(self, ticker, df=None, window = 10, shift = 15, interval = 'w', period = 'max', alpha = 0.05):
         super(WindowScanner, self).__init__()
 
         self.ticker = ticker
@@ -59,6 +59,7 @@ class WindowScanner(FractalScanner):
         self.alpha = alpha
         
         self.interval = interval
+        self.period = period
 
         if df is None:
             ticker_manager = Ticker(ticker = self.ticker, interval=self.interval)
@@ -70,26 +71,26 @@ class WindowScanner(FractalScanner):
         self.levels = []
         max_list = []
         min_list = []
-        for i in range(5, len(self.df)-5):
-            # taking a window of 9 candles
-            high_range = self.df['High'][i-5:i+4]
+
+
+        for i in range(self.window, len(self.df)-self.window):
+            # taking a window of candles
+            high_range = self.df['High'][i-self.window:i+self.window]
             current_max = high_range.max()
             # if we find a new maximum value, empty the max_list 
             if current_max not in max_list:
                 max_list = []
-            max_list.append(current_max)
+            max_list.append(int(current_max))
             # if the maximum value remains the same after shifting 5 times
-            if len(max_list)==5 and self.is_far_from_level(current_max, self.levels, self.df):
+            if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
                 self.levels.append(int(current_max))
-                
-            low_range = self.df['Low'][i-5:i+5]
+
+            low_range = self.df['Low'][i-self.window:i+self.window]
             current_min = low_range.min()
             if current_min not in min_list:
                 min_list = []
-            min_list.append(current_min)
-            if len(min_list)==5 and self.is_far_from_level(current_min,self.levels, self.df):
+            min_list.append(int(current_min))
+            if len(min_list)==self.shift and self.isFarFromLevel(current_min,self.levels, self.df):
                 self.levels.append(int(current_min))
 
-        self.levels.sort()
         self.levels = self.consolidateValues([x for x in self.levels if x > 0], alpha=self.alpha)
-
