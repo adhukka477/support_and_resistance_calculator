@@ -82,7 +82,7 @@ class WindowScanner(FractalScanner):
             max_list.append(current_max)
             # if the maximum value remains the same after shifting 5 times
             if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
-                self.levels.append((high_range.idxmax(), current_max))
+                self.levels.append(current_max)
 
             low_range = self.df['Low'][i-self.window:i+self.window]
             current_min = low_range.min()
@@ -90,4 +90,7 @@ class WindowScanner(FractalScanner):
                 min_list = []
             min_list.append(current_min)
             if len(min_list)==self.shift and self.isFarFromLevel(current_min,self.levels, self.df):
-                self.levels.append((low_range.idxmin(), current_min))
+                self.levels.append(current_min)
+        
+        self.levels.sort()
+        self.levels = self.consolidateValues(values = self.levels, alpha=self.alpha)
