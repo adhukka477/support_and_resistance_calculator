@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='sr_calculator',
-    version='0.0.1',
+    version='0.0.2',
     author='Alishan Dhukka',
     author_email='alishandhukka@gmail.com',
     description='Tool for calculating key support and resistance levels',
