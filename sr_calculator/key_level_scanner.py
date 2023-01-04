@@ -74,7 +74,7 @@ class WindowScanner(FractalScanner):
 
         for i in range(self.window, len(self.df)-self.window):
             # taking a window of candles
-            high_range = self.df['High'][i-self.window:i+self.window]
+            high_range = self.df['High'].values[(i-self.window):(i+self.window)]
             current_max = high_range.max()
             # if we find a new maximum value, empty the max_list 
             if current_max not in max_list:
@@ -84,7 +84,7 @@ class WindowScanner(FractalScanner):
             if len(max_list)==self.shift and self.isFarFromLevel(current_max,self.levels, self.df):
                 self.levels.append(current_max)
 
-            low_range = self.df['Low'][i-self.window:i+self.window]
+            low_range = self.df['Low'].values[(i-self.window):(i+self.window)]
             current_min = low_range.min()
             if current_min not in min_list:
                 min_list = []
